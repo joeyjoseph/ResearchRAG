@@ -1,0 +1,4 @@
+source "/Users/YourUserName/ProjectRoot/corpus-env/bin/activate"
+
+# Activates the environment
+# Replace file path with your Project Root file path

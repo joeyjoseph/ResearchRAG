@@ -1,0 +1,10 @@
+# Start's the web Dashboard Server
+# Replace the file path with your project root file path
+
+python3 -m http.server 8080 --directory "/Users/YourUserName/Project Root" &
+
+Stop Dashboard Server
+
+pkill -f "http.server 8080"
+
+

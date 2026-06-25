@@ -1,0 +1,25 @@
+# Research RAG — nightly automation
+# Order of execution: autoadd -> ingest -> summarize -> currentstatus -> dashboard
+# Replace all instances of "/Users/YourUserName/ProjectRoot/" with your Project Root file path
+
+MAILTO=""
+ANTHROPIC_API_KEY=Your_API_Key
+
+# 1:30am — files new documents from the iCloud "Add To Corpus" watch folder
+# into the correct Corpus subfolder (Books / Articles Journals Websites / Interviews / Misc)
+30 1 * * * PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin /Users/YourUserName/ProjectRoot/corpus-env/bin/python3 /Users/YourUserName/ProjectRoot/Scripts/autoadd.py --config /Users/YourUserName/ProjectRoot/Scripts/config.ini
+
+# 2:00am — scans Corpus and Work for new/changed files, chunks and embeds
+# them into ChromaDB, and records metadata in SQLite (corpus.db)
+0 2 * * * PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin /Users/YourUserName/ProjectRoot/corpus-env/bin/python3 /Users/YourUserName/ProjectRoot/Scripts/ingest.py --config /Users/YourUserName/ProjectRoot/Scripts/config.ini
+
+# 3:00am — generates structured research abstracts for newly ingested documents;
+# source documents route to the Anthropic API, author documents route to LM Studio
+0 3 * * * PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin /Users/YourUserName/ProjectRoot/corpus-env/bin/python3 /Users/YourUserName/ProjectRoot/Scripts/summarize.py --config /Users/YourUserName/ProjectRoot/Scripts/config.ini
+
+# 3:30am — summarizes each file in Work/Manuscript via LM Studio and updates
+# the Current Manuscript Status section of PROJECT_CONTEXT.md
+30 3 * * * PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin /Users/YourUserName/ProjectRoot/corpus-env/bin/python3 /Users/YourUserName/ProjectRoot/Scripts/currentstatus.py --config /Users/YourUserName/ProjectRoot/Scripts/config.ini
+
+# 4:00am — rebuilds dashboard.html from corpus.db and state.db
+0 4 * * * PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin /Users/YourUserName/ProjectRoot/corpus-env/bin/python3 /Users/YourUserName/ProjectRoot/Scripts/dashboard.py --config /Users/YourUserName/ProjectRoot/Scripts/config.ini

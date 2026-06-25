@@ -1,0 +1,5 @@
+cd "/Users/YourUserName/ProjectRoot"
+python3 Scripts/dashboard.py --config Scripts/config.ini
+
+# Runs the script to update the web dashboard
+# Replace file path with your Project file path

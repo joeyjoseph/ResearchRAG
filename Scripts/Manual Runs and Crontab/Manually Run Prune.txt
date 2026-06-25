@@ -1,0 +1,8 @@
+cd "/Users/YourUserName/ProjecRoot"
+source corpus-env/bin/activate
+python3 Scripts/ingest.py --config Scripts/config.ini --prune
+
+# Removes SQLite rows and ChromaDB chunks for any indexed file that no
+# longer exists on disk (e.g. moved or deleted outside the tool).
+# Does not touch files that are still present — safe to run any time.
+# Replace file path with your file path

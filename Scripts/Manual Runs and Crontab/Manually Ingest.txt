@@ -1,0 +1,6 @@
+cd "/Users/YourUserName/ProjectRoot"
+source corpus-env/bin/activate
+python3 Scripts/ingest.py --config Scripts/config.ini
+
+# Manually runs the ingest script
+# Replace file path with your Project Root file path
