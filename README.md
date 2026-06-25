@@ -25,8 +25,9 @@ Before proceeding to the [INSTALL AND SETUP guide](<INSTALL AND SETUP.md>) take 
 The **Golden Rule of Data** applies: **Garbage in: Garbage out**. Some general guidelines:
 
 - We picked plaintext files, but .md or whatever else are proabably fine. Try to pick one and stick with it. The less you have to manage the better. Not all of your first group of files have to be this format. But the script that will generate and automatically add to the database  converts everything to txt, so you'll need to change it if you prefer something else, or want more than one type.
+One thing to be aware of. If you have a lot of visual/handwriting PDFs to OCR (Optical Character Recognition - the process by which a document turns visual information into text), you will spend a decent amount of tokens to convert them. In future updates of this tool, it's possible I will update the converstion script to use local VLM (visual langauge model) in an attempt to lower token cost.
 - Creat a directory structure. You'll see how we did it in the Install guide, but each project is different. You'll need to decided on this before you begin. If you don't have, and don't anticipate dealing with interviews, then don't make an `Interviews/` folder
 - If your files are ready, place them in their appropriate folders. If you have some that need converting, place them in the `Add To Corpus/` folder.
-- Once you're ready, you can move on to the [INSTALL AND SETUP guide](<INSTALL AND SETUP.md>).
+- Once you're ready, you can move on to the [INSTALL AND SETUP guide](<INSTALL_AND_SETUP.md>).
 
-For more detailed information about how the system works, check out [System Documentation](<System Documentation.md>).
+For more detailed information about how the system works, check out [System Documentation](<System_Documentation.md>).
