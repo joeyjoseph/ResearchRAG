@@ -20,7 +20,7 @@ Other than the aforementioned SQL and Vector database duet, the system is quite 
 4. An ai agent called Hermes that acts as chat interface for project questions, as well as a powerful manager of the system 
 
 ## Pre-configuration
-Before proceeding to the [INSTALL AND SETUP guide](<INSTALL AND SETUP.md>) take a moment to think about your corpus. You don't have to over-do it, but there are things you can do to make sure you have a clean, intelligible structure that is easy to add, remove, or edit.
+Before proceeding to the [INSTALL AND SETUP guide](<INSTALL_AND_SETUP.md>) take a moment to think about your corpus. You don't have to over-do it, but there are things you can do to make sure you have a clean, intelligible structure that is easy to add, remove, or edit.
 
 The **Golden Rule of Data** applies: **Garbage in: Garbage out**. Some general guidelines:
 

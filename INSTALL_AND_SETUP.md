@@ -1,32 +1,44 @@
 # Research Corpus Toolkit — Installation and Setup
 
-This document walks through installing this research infrastructure from scratch and running it for the first time. For full system details once it's running, see the project's handoff document. For a high-level overview, see [README.md](README.md).
+This document walks through installing the components, setting up the tool, and running it for the first time. For full system details once it's running, see the [System_Documentation](<System_Documentation.md>).
 
-Throughout this guide, `<PROJECT_ROOT>` stands for wherever you keep your project folder, e.g. `/Users/your username/Documents/My Project`. Replace it with your actual path in every command and config value below.
+## Step 1
 
-## Before You Begin: Decide on Your Folder Structure
+- Download this repo by clicking the green **Code** button and select **Download Zip** This will download the tool with the necesary directory structures in place.
+- Unzip if your OS doesn't automatically, then rename `ResearchRAG-main` to the name of your Project.
+- Move the entire directory out of your `Downloads` folder into a more logical place. We placed ours in `/Users/your username/Documents/My Project`, but you can place it whereever you like.
+
+Throughout this guide, `<PROJECT_ROOT>` stands for wherever you keep your project folder. Until we have a scripted installer, you'll be required to open the scripts contained in the project folders and replace any file paths with your own.
+
+### The Folder Structure
 
 This toolkit splits your files into two roles:
 
-- **Source material** ("Corpus") — books, articles, interviews, and other reference documents you're researching from
-- **Your own writing** ("Work") — drafts, manuscript chapters, notes, research memos, outlines
+- **Source material** — books, articles, interviews, and other reference documents are contained in the folder named ("Corpus")
+- **Your own writing** — drafts, manuscript chapters, notes, research memos, outlines are contained in the folder named ("Work") 
 
-You can name and organize these however suits your project. The defaults used in this toolkit's examples are `Corpus/` and `Work/`, each containing a handful of top-level category subfolders (e.g. `Corpus/Books/`, `Corpus/Interviews/`, `Work/Manuscript/`, `Work/Notes/`) — but none of this is fixed. Decide your structure now, because two things need to match it before you run anything:
+Decide your structure now, because two things need to match it before you run anything:
 
 1. **`Scripts/config.ini`** — the `CORPUS_ROOT` and `WORK_ROOT` paths
 2. **`Scripts/ingest.py`** — the `CORPUS_CATEGORY_FOLDERS` and `WORK_CATEGORY_FOLDERS` sets, which must list your actual top-level subfolder names so files get tagged correctly
 
-If you're not sure yet, it's fine to start with two simple folders and refine later — adding a new top-level folder later just means updating those two places and re-running ingest (see "Adding New Content" in the handoff doc).
+If you're not sure yet, it's fine to start with two simple folders and refine later — adding a new top-level folder later just means updating those two places and re-running ingest (see "Adding New Content" in [System_Documentation](<System_Documentation.md>)).
+
+### What kind of files should be in the Corpus?
+
+We chose to convert everything into plain txt files. Who knows why. Could've been md files, or html, or json. But there's a general preference for working with simple consistent data structures. You can use a different format, or even multiple formats. Just know that if you have a lot of PDFs or unsusual files, you're going to want to convert them into something the system can ingest and work with more easily.
+
+The autoadd.py script that handles adding new files to the corpus as you go about using it. It wants to convert everything to txt. If you want it to do something different, you can either crack it open and manually to change it, or just ask Hermes to do it for you.
 
 ---
 
-## Requirements
+## Step 2 - Installing System Prerequisites
 
 - macOS or Linux with Homebrew available (the cron jobs assume a Homebrew `PATH`) Open your terminal and enter:
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
-- Be sure to follow any instructions Homebrew gives at the end of installation.
+- Be sure to follow any instructions Homebrew gives at the end of installation to activate environments.
   
 - Python 3.10+
 
@@ -35,12 +47,9 @@ Once Homebrew is installed, in terminal enter:
 brew install python
 ```
 
-- An Anthropic API key (for summarizing source/reference material)
-- [LM Studio](https://lmstudio.ai) or its headless counterpart llmster installed (for summarizing your own unpublished writing — manuscript, drafts, notes — entirely locally, so it never leaves your machine) The installation for this is covered later in the document.
-- ~200MB free disk space for the embedding model, NER model, and Python environment
 ---
 
-## Installation
+## Step 3 Installing Code Libraries
 
 Install steps must run in order — the install script builds the Python environment everything else depends on, and the API key must exist in your shell environment before any script that calls the Anthropic API will work.
 
@@ -78,9 +87,16 @@ Every manual script run needs this first, in any new terminal session:
 source "<PROJECT_ROOT>/corpus-env/bin/activate"
 ```
 
-### 4. Set your Anthropic API key
+## Step 4. Installing and configuring your LLM Tools
 
-Add it to your shell profile so it's available in normal terminal sessions:
+This will walk you through a hybrid local + frontier model setup. If you want to run everything local, skip the Anthropic (or other) API setup steps. You will need
+
+- An Anthropic API key (for summarizing source/reference material)
+- [LM Studio](https://lmstudio.ai) or its headless counterpart llmster installed (for summarizing your own unpublished writing — manuscript, drafts, notes — entirely locally, so it never leaves your machine) The installation for this is covered later in the document.
+- ~200MB free disk space for the embedding model, NER model, and Python environment
+
+### 1. Adding your Anthropic API to the tool
+Login to [console.anthropic.comm](https://console.anthropic.com/) and copy your API key. Then add it to your shell profile so it's available in normal terminal sessions:
 
 ```bash
 echo 'export ANTHROPIC_API_KEY=your-key-here' >> ~/.zshrc
@@ -91,17 +107,32 @@ source ~/.zshrc
 
 Never write the key into `config.ini`, into a backup file, or into anything else stored inside the project folder — it should only ever live in your shell environment or in the crontab itself.
 
-### 5. Install LM Studio
+### 2. Install LM Studio
 
 Download and install from [lmstudio.ai](https://lmstudio.ai), then load any chat-capable local model.
 
 The LM Studio app is fairly lightweight, but if you want an even more lightweight installation and are comfortable in a CLI there is a headless LM Studio CLI package called [llmster](https://lmstudio.ai/docs/developer/core/headless_llmster). From the perspective of both this Research RAG tool and your Hermes agent, there is no difference between the two.
 
 Choosing a model is dependent upon your computer's cababilities and RAM.
-- For basic use on most computers, select a 4bit quantized model like qwen/qwen3.5-4b or google/gemma4-4eb. In my experience, Qwen has been better at tool use.
-- Load the model and give it a context lenght of around 60000 if you have enough RAM. While Hermes (your agent) has auto contet compression, it's nice to minimize the necessity, and it might even yell at you if it's not around 40000.
+- For basic use on most computers, select a 4bit quantized model like qwen/qwen3.5-4b or google/gemma4-4eb. In my experience, Qwen has been better at tool use. Even smaller lower reasoning models should be sufficient for the core database creation component of the tool. In fact some people recommend the smaller qwen2.5-0.5b model for basic classification taks. If you are planning to go 100% local, you will need a larger model for reasoning tasks like asking questions about your Corpus.
+
+- If you are going to use the LM Studio app, you can use the built-in model search and download capability to search for those.
+- If you are going to use the CLI, the command is 'lms get'. You can type that and see a preselected list of models to choose from.
+
+If there's one you've found on [huggingface](<https://huggingface.co>) that you like, the command is something like this:
+
+```bash
+lms get https://huggingface.co/Qwen/Qwen3.5-4B
+```
+
+- Next, load the model and give it a context lenght of around 60000 if you have enough RAM. While Hermes (your agent) has auto contet compression, it's nice to minimize the necessity, and it might even yell at you if it's not around 40000. Looks like:
+
+```bash
+lms load qwen/qwen3.5-4b --context-length 64000
+```
+
 - Leave LM Studio running with a model loaded — summarization and manuscript-status scripts depend on it being reachable at its default end-point of `http://localhost:1234/v1`.
-- Note that unlike Anthropic or other model providers that use APIs, LMStudio/llmster leave this value empty in any relevant scripts in the /Scripts folder.
+- Note that unlike Anthropic or other model providers that use APIs, LMStudio/llmster leave their API value empty in any relevant scripts in the /Scripts folder.
 - While this Research RAG tool does not require Hermes to have access to LMStudio/llmster, if you decide to make it available to Hermes for some other reason, you will leave the API key field blank during the process of connecting the model to Hermes.
 
 ---
@@ -112,7 +143,7 @@ Once installation is complete, run through these steps in order to bring your co
 
 ### 1. Configure paths
 
-Open `Scripts/config.ini` and set the `[paths]` section to match the folder structure you decided on above:
+Open `Scripts/config.ini` and set the `[paths]` section to match the folder structure you decided on in Step 1:
 
 ```ini
 [paths]
@@ -125,11 +156,11 @@ LOG_PATH     = <PROJECT_ROOT>/Index/ingest.log
 STATE_DB_PATH = ~/.hermes/state.db
 ```
 
-Adjust `CORPUS_ROOT` and `WORK_ROOT` if you're using different top-level names than `Corpus`/`Work`.
+- Adjust `CORPUS_ROOT` and `WORK_ROOT` if you're using different top-level names than `Corpus`/`Work`.
 
-Leave `ANTHROPIC_API_KEY` blank in this file — it should only ever come from the environment variable set in Step 4 above.
+- Leave `ANTHROPIC_API_KEY` blank in this file — it should only ever come from the environment variable set in Step 4 above.
 
-Optionally fill in `RESEARCH_THEMES` under `[summarize]` with your project's own themes, comma-separated (e.g. `chaos theory, complexity science, Cold War, systems thinking`). This helps the summarize step tag documents for relevance.
+- Fill in `RESEARCH_THEMES` under `[summarize]` with your project's own themes, comma-separated (e.g. `chaos theory, complexity science, Cold War, systems thinking`). This helps the summarize step tag documents for relevance.
 
 ### 2. Register your folder names in ingest.py
 
@@ -149,7 +180,7 @@ Replace the contents with the actual top-level subfolder names you created under
 
 ### 3. Add your source material
 
-Drop `.txt` files into the subfolders you defined — reference material under your Corpus folders, your own drafts and notes under your Work folders.
+Dropp your files into the subfolders you defined accordingly.
 
 ### 4. Run the first ingest
 
@@ -179,7 +210,9 @@ python3 Scripts/currentstatus.py --config Scripts/config.ini
 
 This scans your manuscript-equivalent Work folder and writes a status summary into your project's context file. LM Studio must be running for this step too. If your manuscript folder isn't literally named `Manuscript`, check that `currentstatus.py` points at the right subfolder for your structure.
 
-### 7. Generate the dashboard
+### 7. OPTIONAL Generate the dashboard
+
+If you want to see info about your project at a glance, you can use the included web dashboard. In order to build it, run the following commands.
 
 ```bash
 python3 Scripts/dashboard.py --config Scripts/config.ini
@@ -243,7 +276,7 @@ crontab -l > Scripts/crontab.backup.txt
 
 ---
 
-## Installing the Hermes Agent
+## Installing the Hermes Agent (under construction)
 
 The research agent (referred to here as "Hermes") is installed separately from this toolkit. Full documentation lives at [hermes-agent.nousresearch.com/docs](https://hermes-agent.nousresearch.com/docs).
 
