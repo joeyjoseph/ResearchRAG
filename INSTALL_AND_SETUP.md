@@ -2,7 +2,7 @@
 
 This document walks through installing the components, setting up the tool, and running it for the first time. For full system details once it's running, see the [System_Documentation](<System_Documentation.md>).
 
-## Step 1
+## Step 1 - Downloading the Repo and Naming Folders
 
 - Download this repo by clicking the green **Code** button and select **Download Zip** This will download the tool with the necesary directory structures in place.
 - Unzip if your OS doesn't automatically, then rename `ResearchRAG-main` to the name of your Project.

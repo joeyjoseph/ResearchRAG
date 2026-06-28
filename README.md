@@ -34,6 +34,7 @@ For more detailed information about how the system works, check out [System Docu
 
 
 ## Possible Future Release
+- In progress: simplyfing the installation and setup process.
 - If using an Anthropic API Key, possible use of [Batch Processing](https://platform.claude.com/docs/en/build-with-claude/batch-processing) for initial database creation, and `autoadd` script runs of more than a few documents.
 - Exploring integrating direct access to source databases like JSTOR, University databases, z-library.
 - Augmenting OCR skills to use local VLM and low reasoning model duet for handwritten documents.

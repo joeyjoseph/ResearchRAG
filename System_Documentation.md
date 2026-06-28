@@ -40,19 +40,14 @@ These layers work together as a RAG (Retrieval Augmented Generation) system. Her
 ```
 /Users/User/Documents/Project Name/
     Corpus/
-        Text/
             Articles Journals Websites/
             Books/
             Interviews/
             Misc/
-        Visuals/
     Work/
         Drafts/
-        Finished Chapters/
         Manuscript/
         Notes/
-        Outlines/
-        Proposal/
         Research Memos/
     Index/
         corpus.db              SQLite metadata database
