@@ -14,14 +14,19 @@ Supported input types:
     .jpg / .jpeg / .png / .tif / .tiff (OCR via pytesseract)
 
 Classification:
-    The first ~1,500 words of extracted text are sent to the Anthropic API,
-    which returns exactly one of: Books, Articles Journals Websites, Misc.
+    The first ~1,500 words of extracted text are sent to the Anthropic API.
+    Valid categories and their classification guidance are both read from
+    config.ini's [corpus_categories] section at startup — not hardcoded —
+    so the classification prompt always matches whatever categories
+    actually exist. A category with a blank description in config.ini still
+    works, just with a generic fallback line instead of tailored guidance;
+    add a real description there to improve accuracy.
     This is corpus/source material, so it is routed through the same backend
     as source-document summarization in summarize.py — never LM Studio, which
     is reserved for the author's own unpublished writing.
 
 On success:
-    The .txt file is written to CORPUS_ROOT/Text/<category>/<filename>.txt
+    The .txt file is written to CORPUS_ROOT/<category>/<filename>.txt
     and the original file is deleted from the watch folder.
 
 On failure (extraction too thin, OCR failure, API error after retries,
@@ -70,6 +75,8 @@ args = parser.parse_args()
 # ---------------------------------------------------------------------------
 
 config = configparser.ConfigParser(inline_comment_prefixes=("#",))
+config.optionxform = str  # preserve exact case of category names — they must
+                           # match real folder names on disk exactly
 config.read(args.config)
 
 CORPUS_ROOT = Path(config["paths"]["CORPUS_ROOT"])
@@ -84,11 +91,24 @@ ANTHROPIC_API_KEY = config["summarize"].get("ANTHROPIC_API_KEY", "").strip() \
                     or os.environ.get("ANTHROPIC_API_KEY", "")
 MAX_RETRIES       = int(config["summarize"].get("MAX_RETRIES", "5"))
 
-# Target categories — must match the subset of CORPUS_CATEGORY_FOLDERS in
-# ingest.py that this script knows how to sort into. Files land at the top
-# level of Corpus/Text/Interviews/ — no attempt is made to guess which
-# Interviews subfolder a document belongs in; sort those by hand if needed.
-CATEGORIES = ["Books", "Articles Journals Websites", "Interviews", "Misc"]
+# Target categories and their classification guidance — read from config.ini
+# [corpus_categories] rather than hardcoded, so adding a new Corpus folder
+# (and running Scripts/PathUpdate.py) is enough to make it a valid
+# classification target. A blank description still works; it just produces
+# weaker guidance for that one category until a real description is added.
+if not config.has_section("corpus_categories") or not dict(config["corpus_categories"]):
+    print("FATAL: no categories found in config.ini [corpus_categories]. "
+          "Run Scripts/PathUpdate.py first to detect your Corpus folders.", file=sys.stderr)
+    sys.exit(1)
+
+CATEGORY_GUIDANCE = dict(config["corpus_categories"])  # name -> description (may be "")
+CATEGORIES = list(CATEGORY_GUIDANCE.keys())
+
+if "Misc" not in CATEGORIES:
+    print("WARNING: no 'Misc' (or similarly named catch-all) category found among your "
+          "Corpus folders. Low-confidence documents will fall back to whatever category "
+          "happens to be listed last in config.ini. Consider adding a catch-all category.",
+          file=sys.stderr)
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -199,16 +219,36 @@ def extract_text(file_path: Path) -> str:
 # Classification via Anthropic API
 # ---------------------------------------------------------------------------
 
-CLASSIFY_PROMPT_TEMPLATE = """You are sorting a newly added document into a research corpus.
+GENERIC_GUIDANCE_LINE = (
+    'Use "{name}" for documents that best match this category name. '
+    'No description has been written for it yet in config.ini — add one '
+    'under [corpus_categories] to improve classification accuracy.'
+)
 
-Read the excerpt below and decide which single category it belongs to. Respond with exactly one of these four words/phrases and nothing else — no punctuation, no explanation:
 
-Books
-Articles Journals Websites
-Interviews
-Misc
+def build_classify_prompt(excerpt: str) -> str:
+    """
+    Build the classification prompt dynamically from whatever categories are
+    currently registered in config.ini, instead of a hardcoded template.
+    """
+    category_list_block = "\n".join(CATEGORIES)
 
-Use "Books" for full-length books or book-length manuscripts. Use "Articles Journals Websites" for journal articles, magazine or newspaper articles, blog posts, or website content. Use "Interviews" for oral histories, interview transcripts, or Q&A-format documents — including anything that explicitly identifies itself as an "oral history" or "interview," even if it also contains biographical or narrative framing around the Q&A content. Use "Misc" for anything else, or anything you cannot confidently classify (reports, miscellaneous notes, unclear fragments, etc.).
+    guidance_lines = []
+    for name in CATEGORIES:
+        description = CATEGORY_GUIDANCE.get(name, "").strip()
+        if description:
+            guidance_lines.append(f'Use "{name}" for {description}')
+        else:
+            guidance_lines.append(GENERIC_GUIDANCE_LINE.format(name=name))
+    guidance_block = "\n".join(guidance_lines)
+
+    return f"""You are sorting a newly added document into a research corpus.
+
+Read the excerpt below and decide which single category it belongs to. Respond with exactly one of these {len(CATEGORIES)} words/phrases and nothing else — no punctuation, no explanation:
+
+{category_list_block}
+
+{guidance_block}
 
 Document excerpt:
 ---
@@ -226,7 +266,7 @@ def call_anthropic_classify(excerpt: str) -> str:
         sys.exit(1)
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    prompt = CLASSIFY_PROMPT_TEMPLATE.format(excerpt=excerpt)
+    prompt = build_classify_prompt(excerpt)
 
     for attempt in range(MAX_RETRIES):
         try:
@@ -256,13 +296,20 @@ def call_anthropic_classify(excerpt: str) -> str:
 
 
 def normalize_category(raw: str) -> str:
-    """Match the model's response to an allowed category, defaulting to Misc."""
+    """
+    Match the model's response to an allowed category. Falls back to "Misc"
+    if present among the registered categories, otherwise to whichever
+    category is listed last in config.ini (a startup warning is printed if
+    no "Misc"-named category exists, so this situation is never silent).
+    """
     cleaned = raw.strip().strip(".").strip()
     for category in CATEGORIES:
         if cleaned.lower() == category.lower():
             return category
-    log.warning(f"  Unexpected classification response: '{raw}' — defaulting to Misc")
-    return "Misc"
+
+    fallback = "Misc" if "Misc" in CATEGORIES else CATEGORIES[-1]
+    log.warning(f"  Unexpected classification response: '{raw}' — defaulting to {fallback}")
+    return fallback
 
 # ---------------------------------------------------------------------------
 # Filing the converted text
@@ -318,7 +365,7 @@ def process_file(file_path: Path, run_stats: dict):
         run_stats["failed"] += 1
         return
 
-    target_dir = CORPUS_ROOT / "Text" / category
+    target_dir = CORPUS_ROOT / category
     target_path = unique_target_path(target_dir, file_path.stem)
 
     if args.dry_run:
@@ -354,6 +401,7 @@ def main():
     log.info(f"AUTOADD RUN STARTED — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     log.info(f"Watch folder : {WATCH_FOLDER}")
     log.info(f"Corpus root  : {CORPUS_ROOT}")
+    log.info(f"Categories   : {CATEGORIES}")
     log.info(f"Dry run      : {args.dry_run}")
     log.info("=" * 70)
 

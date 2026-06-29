@@ -17,12 +17,9 @@ This toolkit splits your files into two roles:
 - **Source material** — books, articles, interviews, and other reference documents are contained in the folder named ("Corpus")
 - **Your own writing** — drafts, manuscript chapters, notes, research memos, outlines are contained in the folder named ("Work") 
 
-Decide your structure now, because two things need to match it before you run anything:
+Decide your structure now — once your folders exist, running `Scripts/PathUpdate.py` will pick up both your paths and your category folder names automatically. (You can still hand-edit `config.ini` directly instead, if you'd rather skip the script — see "Configure paths" below.)
 
-1. **`Scripts/config.ini`** — the `CORPUS_ROOT` and `WORK_ROOT` paths
-2. **`Scripts/ingest.py`** — the `CORPUS_CATEGORY_FOLDERS` and `WORK_CATEGORY_FOLDERS` sets, which must list your actual top-level subfolder names so files get tagged correctly
-
-If you're not sure yet, it's fine to start with two simple folders and refine later — adding a new top-level folder later just means updating those two places and re-running ingest (see "Adding New Content" in [System_Documentation](<System_Documentation.md>)).
+If you're not sure yet, it's fine to start with two simple folders and refine later — adding a new top-level folder later just means running `Scripts/PathUpdate.py` again, or adding a line to `config.ini` by hand. (see "Adding New Content" in [System_Documentation](<System_Documentation.md>)).
 
 ### What kind of files should be in the Corpus?
 
@@ -142,6 +139,7 @@ lms load qwen/qwen3.5-4b --context-length 64000
 Once installation is complete, run through these steps in order to bring your corpus online for the first time.
 
 ### 1. Configure paths
+*"The fastest way to do this step (and the next one) is to run `Scripts/PathUpdate.py` — see below. If you'd rather edit `config.ini` by hand, here's what to change:"*
 
 Open `Scripts/config.ini` and set the `[paths]` section to match the folder structure you decided on in Step 1:
 
@@ -162,19 +160,20 @@ STATE_DB_PATH = ~/.hermes/state.db
 
 - Fill in `RESEARCH_THEMES` under `[summarize]` with your project's own themes, comma-separated (e.g. `chaos theory, complexity science, Cold War, systems thinking`). This helps the summarize step tag documents for relevance.
 
-### 2. Register your folder names in ingest.py
-
-Open `Scripts/ingest.py` and find these two sets near the top:
-
-```python
-CORPUS_CATEGORY_FOLDERS = {
-    "Books", "Interviews", "Articles Journals Websites", "Misc"
-}
-
-WORK_CATEGORY_FOLDERS = {
-    "Proposal", "Drafts", "Manuscript", "Research Memos", "Notes"
-}
+### 2. Register your category folders
+Run:
+```bash
+python3 Scripts/PathUpdate.py --project-root "<PROJECT_ROOT>" \ --add-to-corpus "<path to your Add To Corpus watch folder>"
 ```
+This detects every folder under `Corpus/` and `Work/` and adds any missing ones to `config.ini`'s `[corpus_categories]`/`[work_categories]` sections with a blank description. Open `config.ini` afterward and write a one-line description for each Corpus category — this is what `autoadd.py` uses to classify new documents accurately; a blank description still works, just with a weaker generic fallback.
+
+*(If you'd rather not use the script, you can add the same lines to `config.ini` by hand instead — see Step 1 above.)*
+
+**Open structural question flagged, not resolved here:** Steps 1 and 2
+overlap almost entirely once `PathUpdate.py` exists, since one script run
+covers both. Worth deciding whether to merge them into a single step in a
+future pass, rather than presenting them as two sequential manual
+choices.
 
 Replace the contents with the actual top-level subfolder names you created under your `Corpus/` and `Work/` roots. Any subfolder nested *inside* one of these is detected automatically — only the top-level category names need to be listed explicitly here.
 

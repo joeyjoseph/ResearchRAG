@@ -6,12 +6,14 @@ embeds them into ChromaDB, and records metadata in SQLite.
 Project structure assumed:
     Project Root/
         Corpus/
-            Text/
-                Books/
-                Interviews/
-                Articles Journals Websites/
-                Misc/
-            Visuals/   (ignored)
+            Books/
+            Interviews/
+            Articles Journals Websites/
+            Misc/
+            (any other top-level folder you create directly under Corpus/ is
+            its own category — add it to [corpus_categories] in config.ini,
+            or run Scripts/PathUpdate.py to detect and register it
+            automatically)
         Work/
             Proposal/
             Drafts/
@@ -26,6 +28,10 @@ document_role:
 source_type is derived from the top-level category folder
 (e.g. Books, Interviews, Drafts, Research Memos).
 subfolder is the immediate parent folder when files are nested deeper.
+
+Category folders are read from config.ini at startup — [corpus_categories]
+for Corpus/ and [work_categories] for Work/ — rather than hardcoded in this
+file. See config.ini for details.
 
 Usage:
     python ingest.py --config config.ini
@@ -75,6 +81,8 @@ args = parser.parse_args()
 # ---------------------------------------------------------------------------
 
 config = configparser.ConfigParser()
+config.optionxform = str  # preserve exact case of category names — they must
+                           # match real folder names on disk exactly
 config.read(args.config)
 
 CORPUS_ROOT = Path(config["paths"]["CORPUS_ROOT"])
@@ -112,15 +120,18 @@ log = logging.getLogger(__name__)
 # Source type and document role resolution
 # ---------------------------------------------------------------------------
 
-# Top-level category folders under Corpus/Text/
-CORPUS_CATEGORY_FOLDERS = {
-    "Books", "Interviews", "Articles Journals Websites", "Misc"
-}
+# Top-level category folders, read from config.ini rather than hardcoded.
+# The folder name is the section key; the description (used by autoadd.py's
+# classifier) is the value and isn't needed here — only the names matter.
+if not config.has_section("corpus_categories") or not dict(config["corpus_categories"]):
+    log.warning("No categories found in config.ini [corpus_categories]. "
+                "Run Scripts/PathUpdate.py to detect and register your Corpus folders.")
+CORPUS_CATEGORY_FOLDERS = set(config["corpus_categories"].keys()) if config.has_section("corpus_categories") else set()
 
-# Top-level category folders under Work/
-WORK_CATEGORY_FOLDERS = {
-    "Proposal", "Drafts", "Manuscript", "Research Memos", "Notes"
-}
+if not config.has_section("work_categories") or not dict(config["work_categories"]):
+    log.warning("No categories found in config.ini [work_categories]. "
+                "Run Scripts/PathUpdate.py to detect and register your Work folders.")
+WORK_CATEGORY_FOLDERS = set(config["work_categories"].keys()) if config.has_section("work_categories") else set()
 
 
 def resolve_metadata(file_path: Path) -> tuple[str, str, str]:

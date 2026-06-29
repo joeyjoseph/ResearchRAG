@@ -36,6 +36,7 @@ These layers work together as a RAG (Retrieval Augmented Generation) system. Her
 ---
 
 ## File and Folder Structure
+The default folder structure is listed below. You may add or remove new categories in the Corpus and Work folder.
 
 ```
 /Users/User/Documents/Project Name/
@@ -58,6 +59,7 @@ These layers work together as a RAG (Retrieval Augmented Generation) system. Her
     Scripts/
         autoadd.py             add to corpus script
         ingest.py              corpus indexing script
+        PathUpdate.py          update config with custom paths
         summarize.py           abstract generation script
         currentstatus.py       manuscript status updater
         config.ini             all project settings
@@ -171,7 +173,7 @@ python3 Scripts/ingest.py --config Scripts/config.ini
 python3 Scripts/ingest.py --config Scripts/config.ini --repair
 ```
 
-**Adding new top-level folders:** Edit `CORPUS_CATEGORY_FOLDERS` or `WORK_CATEGORY_FOLDERS` in `ingest.py` to register new top-level folders. Subfolders within existing categories are detected automatically.
+**Adding new top-level folders:** Create the folder under `Corpus/` or `Work/`, then either add a line for it under `[corpus_categories]` / `[work_categories]` in `config.ini` by hand, or run `Scripts/PathUpdate.py` to detect and add it automatically (with a blank description, ready for you to fill in).
 
 ---
 
@@ -206,8 +208,9 @@ Adds files from a predefined folder to the corpus.
 **Key behaviors:**
 - Searches for documents in a predefinied [Add To Corpus] folder.
 - Converts them into txt files
-- Attempts to determine document type `Books, Article Journal Website, Interview, Misc` and place into appropriate folder in the Corpus.
-- Deletes originals in [Add To Corpus]
+- Valid categories and their classification guidance are both read from `config.ini`'s `[corpus_categories]` section at startup — never hardcoded. A category with a blank description still works as a valid filing target, but gets a generic fallback line in the classification prompt instead of tailored guidance; fill in a real description in `config.ini` to improve accuracy for that category.
+- Warns at startup if no `Misc`-named (or similarly-named) catch-all category exists, since low-confidence documents have nowhere safe to land without one.
+- Deletes originals in [Add To Corpus] when complete.
 
 **Usage:**
 ```bash
@@ -219,6 +222,18 @@ python3 Scripts/autoadd.py --config Scripts/config.ini
 # python3 Scripts/autoadd.py --config Scripts/config.ini --dry-run
 ```
 **Anthropic or other model must be loaded to convert and categorize**
+
+### PathUpdate.py
+
+Scans `CORPUS_ROOT` and `WORK_ROOT` for whatever top-level subfolders actually exist and additively merges them into `config.ini`'`[corpus_categories]` and `[work_categories]` sections — any folder not already listed gets added with a blank description; existing entries (and any descriptions you've written) are never modified or removed. Folders that have an entry in `config.ini` but no longer exist on disk produce a warning instead of being deleted automatically. Neither
+`ingest.py` nor `autoadd.py` is ever edited by this script — both read `config.ini` directly at runtime.
+
+**Usage**
+```bash
+cd "/Users/YourUserName/ProjectRoot"
+source corpus-env/bin/activate
+python3 Scripts/PathUpdate.py --config Scripts/config.ini
+```
 
 ### currentstatus.py
 
@@ -235,7 +250,6 @@ Scans `Work/Manuscript/` and updates the `## Current Manuscript Status` section 
 ```bash
 python3 Scripts/currentstatus.py --config Scripts/config.ini
 ```
-
 ---
 
 ### config.ini
@@ -263,6 +277,19 @@ EMBEDDING_MODEL = all-MiniLM-L6-v2
 [chromadb]
 COLLECTION_NAME = research_corpus
 
+[corpus_categories]
+Books = full-length books or book-length manuscripts.
+Articles Journals Websites = journal articles, magazine or newspaper articles, blog posts, or website content.
+Interviews = oral histories, interview transcripts, or Q&A-format documents...
+Misc = anything else, or anything that cannot be confidently classified...
+
+[work_categories]
+Proposal =
+Drafts =
+Manuscript =
+Research Memos =
+Notes =
+
 [summarize]
 LLM_BACKEND     = anthropic
 LOCAL_BACKEND   = lmstudio
@@ -274,6 +301,8 @@ DELAY_BETWEEN_REQUESTS = 3
 MAX_RETRIES     = 5
 RESEARCH_THEMES = [comma-separated list of book research themes]
 ```
+
+*Work/ categories are listed for consistency, but have no description field in active use at this time.*
 
 ---
 
@@ -432,14 +461,13 @@ python3 Scripts/summarize.py --config Scripts/config.ini
 
 
 ### Adding a new top-level corpus folder
-1. Create the folder under `Corpus/Text/`
-2. Add the folder name to `CORPUS_CATEGORY_FOLDERS` in `ingest.py`
-3. Run ingest
+1. Create the folder directly under `Corpus/` — e.g. `Corpus/Photographs/`
+2. Run `Scripts/PathUpdate.py` (or add a line under `[corpus_categories]` in `config.ini` by hand) — this registers the new category with a blank description
+3. Open `config.ini` and write a one-line description for the new category under `[corpus_categories]`, so `autoadd.py` can classify into it accurately rather than falling back to a generic guess based on the name alone
+4. Run ingest
 
 ### Adding a new top-level Work folder
-1. Create the folder under `Work/`
-2. Add the folder name to `WORK_CATEGORY_FOLDERS` in `ingest.py`
-3. Run ingest
+Same procedure as the above, but with `Work/` forlder.
 
 ### Moving the project to a new location
 1. Move the entire `Project Name/` folder
@@ -468,6 +496,7 @@ python3 Scripts/ingest.py --config Scripts/config.ini
 - **ChromaDB path references:** If the project is moved, ChromaDB chunk metadata still contains old paths. A full re-ingest is required after moving (SQLite migration handles the metadata database).
 - **spaCy NER accuracy:** Person name extraction is approximate. Some names will be missed; some non-names will be incorrectly extracted. The `names_mentioned` field is a useful starting point, not a definitive index.
 - **Encoding fallback:** Text files that are not UTF-8 are read using Latin-1 as a fallback. Files requiring this fallback are noted in the ingest log.
+- **Category descriptions live only in `config.ini`.** Unlike folder structure, which is self-evident from the filesystem, the classification guidance you write for each category exists nowhere else. Back up `config.ini` along with the rest of the project — losing it loses every hand-written category description, not just paths.
 
 ---
 
