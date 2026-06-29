@@ -23,9 +23,9 @@ If you're not sure yet, it's fine to start with two simple folders and refine la
 
 ### What kind of files should be in the Corpus?
 
-We chose to convert everything into plain txt files. Who knows why. Could've been md files, or html, or json. But there's a general preference for working with simple consistent data structures. You can use a different format, or even multiple formats. Just know that if you have a lot of PDFs or unsusual files, you're going to want to convert them into something the system can ingest and work with more easily.
+We chose to convert everything into plain txt files. The assumption was that this would be the smallest footprint and have the least issues with various LLMs and python scripts that the robot calls. Could've been md files. Other filetypes like html, or json may have character issues with some toos. Didn't want to risk it.
 
-The autoadd.py script that handles adding new files to the corpus as you go about using it. It wants to convert everything to txt. If you want it to do something different, you can either crack it open and manually to change it, or just ask Hermes to do it for you.
+The autoadd.py script that handles adding new files to the corpus as you go about using it wants to convert everything to txt. If you want it to do something different, you can either crack it open and manually to change it, or just ask Hermes to do it for you.
 
 ---
 
@@ -139,7 +139,7 @@ lms load qwen/qwen3.5-4b --context-length 64000
 Once installation is complete, run through these steps in order to bring your corpus online for the first time.
 
 ### 1. Configure paths
-*"The fastest way to do this step (and the next one) is to run `Scripts/PathUpdate.py` — see below. If you'd rather edit `config.ini` by hand, here's what to change:"*
+The fastest way to do this step (and the next one) is to run `Scripts/PathUpdate.py` — see below. If you'd rather edit `config.ini` by hand, here's what to change:
 
 Open `Scripts/config.ini` and set the `[paths]` section to match the folder structure you decided on in Step 1:
 
@@ -165,7 +165,9 @@ Run:
 ```bash
 python3 Scripts/PathUpdate.py --project-root "<PROJECT_ROOT>" \ --add-to-corpus "<path to your Add To Corpus watch folder>"
 ```
-This detects every folder under `Corpus/` and `Work/` and adds any missing ones to `config.ini`'s `[corpus_categories]`/`[work_categories]` sections with a blank description. Open `config.ini` afterward and write a one-line description for each Corpus category — this is what `autoadd.py` uses to classify new documents accurately; a blank description still works, just with a weaker generic fallback.
+This detects every folder under `Corpus/` and `Work/` and adds any missing ones to `config.ini`'s `[corpus_categories]`/`[work_categories]` sections with a blank description.
+
+**IMPORTANT STEP:** Open `config.ini` afterward and write a one-line description for each Corpus category — this is what `autoadd.py` uses to classify new documents accurately; a blank description still works, just with a weaker generic fallback.
 
 *(If you'd rather not use the script, you can add the same lines to `config.ini` by hand instead — see Step 1 above.)*
 
