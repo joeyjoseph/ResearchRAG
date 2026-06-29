@@ -377,8 +377,8 @@ Defines Hermes as a rigorous research assistant with expertise in:
 
 Key behavioral rules: no sycophancy, always cite sources, surface contradictions, present both supporting and complicating evidence, distinguish documented/inferred/speculative, offer to save findings to Work/Notes/.
 
-### eoc-search skill
-**Location:** `~/.hermes/skills/research/eoc-search/SKILL.md`
+### ProjectName-search skill
+**Location:** `~/.hermes/skills/research/ProjectName-search/SKILL.md`
 
 Project-specific skill that gives Hermes:
 - All project paths
@@ -396,7 +396,7 @@ Project-specific skill that gives Hermes:
 **Reload after changes:** `/reload-skills`
 
 ### PROJECT_CONTEXT.md
-**Location:** `/Users/User/Documents/Project Name/PROJECT_CONTEXT.md`
+**Location:** `/Users/User/Documents/Project Root/PROJECT_CONTEXT.md`
 
 Human-readable project context read by Hermes at session start. Contains:
 - Book overview and central argument
@@ -465,7 +465,7 @@ python3 Scripts/summarize.py --config Scripts/config.ini
 
 
 ### Adding a new top-level corpus folder
-1. Create the folder directly under `Corpus/` — e.g. `Corpus/Photographs/`
+1. Create the folder directly under `Corpus/` — e.g. `Corpus/jokes/`
 2. Run `Scripts/PathUpdate.py` (or add a line under `[corpus_categories]` in `config.ini` by hand) — this registers the new category with a blank description
 3. Open `config.ini` and write a one-line description for the new category under `[corpus_categories]`, so `autoadd.py` can classify into it accurately rather than falling back to a generic guess based on the name alone
 4. Run ingest
