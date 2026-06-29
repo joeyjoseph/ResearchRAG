@@ -223,6 +223,8 @@ python3 Scripts/autoadd.py --config Scripts/config.ini
 ```
 **Anthropic or other model must be loaded to convert and categorize**
 
+---
+
 ### PathUpdate.py
 
 Scans `CORPUS_ROOT` and `WORK_ROOT` for whatever top-level subfolders actually exist and additively merges them into `config.ini`'`[corpus_categories]` and `[work_categories]` sections — any folder not already listed gets added with a blank description; existing entries (and any descriptions you've written) are never modified or removed. Folders that have an entry in `config.ini` but no longer exist on disk produce a warning instead of being deleted automatically. Neither
@@ -234,6 +236,8 @@ cd "/Users/YourUserName/ProjectRoot"
 source corpus-env/bin/activate
 python3 Scripts/PathUpdate.py --config Scripts/config.ini
 ```
+
+---
 
 ### currentstatus.py
 
