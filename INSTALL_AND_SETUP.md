@@ -15,8 +15,8 @@ This guide covers the following:
 
 ## Step 1 - Downloading the Repo and Naming Folders
 
-- Download this repo by clicking the green **Code** button and select **Download Zip** This will download the tool with the necesary directory structures in place.
-- Unzip if your OS doesn't automatically, then rename `ResearchRAG-main` to the name of your Project.
+- [Download this repo](<https://github.com/joeyjoseph/ResearchRAG/releases/tag/v1.0.0>) This will download the tool with the necesary directory structures in place.
+- Unzip if your OS doesn't automatically, then rename `ResearchRAG-v1.0.0` to the name of your Project.
 - Move the entire directory out of your `Downloads` folder into a more logical place. We placed ours in `/Users/your username/Documents/My Project`, but you can place it whereever you like.
 
 ### The Folder Structure
