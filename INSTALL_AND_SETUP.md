@@ -2,13 +2,22 @@
 
 This document walks through installing the components, setting up the tool, and running it for the first time. For full system details once it's running, see the [System_Documentation](<System_Documentation.md>).
 
+## Overview - A Brief Description of This Guide
+This guide covers the following:
+- Downloading and setting up the project folders
+- Installing system prerequisites
+- Installing code libraries using a script
+- Installing and configuring LLM components
+- Creating your first database
+- Installing and configuring an Agent tool to interact with the database
+
+---
+
 ## Step 1 - Downloading the Repo and Naming Folders
 
 - Download this repo by clicking the green **Code** button and select **Download Zip** This will download the tool with the necesary directory structures in place.
 - Unzip if your OS doesn't automatically, then rename `ResearchRAG-main` to the name of your Project.
 - Move the entire directory out of your `Downloads` folder into a more logical place. We placed ours in `/Users/your username/Documents/My Project`, but you can place it whereever you like.
-
-Throughout this guide, `<PROJECT_ROOT>` stands for wherever you keep your project folder. Until we have a scripted installer, you'll be required to open the scripts contained in the project folders and replace any file paths with your own.
 
 ### The Folder Structure
 
@@ -17,7 +26,7 @@ This toolkit splits your files into two roles:
 - **Source material** — books, articles, interviews, and other reference documents are contained in the folder named ("Corpus")
 - **Your own writing** — drafts, manuscript chapters, notes, research memos, outlines are contained in the folder named ("Work") 
 
-Decide your structure now — once your folders exist, running `Scripts/PathUpdate.py` will pick up both your paths and your category folder names automatically. (You can still hand-edit `config.ini` directly instead, if you'd rather skip the script — see "Configure paths" below.)
+Decide your structure now — once your folders exist, running `Scripts/PathUpdate.py` will pick up both your paths and your category folder names and automatically populate the config file with your custom values. You can still hand-edit `config.ini` directly if you prefer — see "Configure paths" below.
 
 If you're not sure yet, it's fine to start with two simple folders and refine later — adding a new top-level folder later just means running `Scripts/PathUpdate.py` again, or adding a line to `config.ini` by hand. (see "Adding New Content" in [System_Documentation](<System_Documentation.md>)).
 
